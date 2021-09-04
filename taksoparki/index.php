@@ -1,13 +1,11 @@
 <?
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Таксопарки");
-//phpinfo();
 ?>
-
-<?$APPLICATION->IncludeComponent(
+<? $APPLICATION->IncludeComponent(
     "cab:feedback.form",
-    "",
-    Array(
+    ".default",
+    array(
         "COMPOSITE_FRAME_MODE" => "A",
         "COMPOSITE_FRAME_TYPE" => "AUTO",
         "CUSTOM_TITLE_DATE_ACTIVE_FROM" => "",
@@ -31,15 +29,35 @@ $APPLICATION->SetTitle("Таксопарки");
         "MAX_LEVELS" => "100000",
         "MAX_USER_ENTRIES" => "100000",
         "PREVIEW_TEXT_USE_HTML_EDITOR" => "N",
-        "PROPERTY_CODES" => array("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","NAME"),
-        "PROPERTY_CODES_REQUIRED" => array("NAME"),
+        "PROPERTY_CODES" => array(
+            0 => "1",
+            1 => "2",
+            2 => "3",
+            3 => "4",
+            4 => "5",
+            5 => "6",
+            6 => "7",
+            7 => "8",
+            8 => "9",
+            9 => "10",
+            10 => "11",
+            11 => "12",
+            12 => "13",
+            13 => "14",
+            14 => "NAME",
+        ),
+        "PROPERTY_CODES_REQUIRED" => array(
+            0 => "NAME",
+        ),
         "RESIZE_IMAGES" => "N",
         "SEF_MODE" => "N",
         "STATUS" => "ANY",
         "STATUS_NEW" => "N",
         "USER_MESSAGE_ADD" => "",
         "USER_MESSAGE_EDIT" => "",
-        "USE_CAPTCHA" => "N"
-    )
+        "USE_CAPTCHA" => "N",
+        "COMPONENT_TEMPLATE" => ".default"
+    ),
+    false
 );?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

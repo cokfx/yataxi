@@ -87,7 +87,7 @@ class FeedbackFormHandler extends CBitrixComponent
     public function executeComponent()
     {
 
-        $this->_checkModules();
+        //$this->_checkModules();
 
         $this->arResult['getRequest'] = Application::getInstance()->getContext()->getRequest();
 
@@ -108,12 +108,186 @@ class FeedbackFormHandler extends CBitrixComponent
     private function getResult($arParams)
     {
         $arResult = [];
+        $arResult['SECTION_LIST'] = $this->getIblockSectionsList();
+        // ib getFieldsList for form fields create
+        $arResult["PROPERTY_LIST_FULL"] = $this->getPropertiesListFull();
+        $arResult["PROPERTY_LIST"] = $this->getPropertiesListsForEdition()['PROPERTY_ID_LIST'];
+        $arResult["PROPERTY_REQUIRED"] = is_array($this->arParams["PROPERTY_CODES_REQUIRED"]) ? $this->arParams["PROPERTY_CODES_REQUIRED"] : array();
 
+
+        // ib getPropertiesList for form Properties create
+
+        // ib element add
+        // if ib element exists
+        //ib getFieldsListValue
+        // ib getPropertiesListValue
+        // ib element update
 
         return $arResult;
     }
 
+    /**
+     * Обертка над глобальной переменной
+     * @return CAllUser|CUser
+     */
+    private function _user()
+    {
+        global $USER;
+        return $USER;
+    }
 
+    private function allowAccess()
+    {
+        $arGroups = $this->_user()->GetUserGroupArray();
+        // check whether current user can have access to add/edit elements
+        if ($this->arParams["ID"] == 0) {
+            $bAllowAccess = count(array_intersect($arGroups, $this->arParams["GROUPS"])) > 0 || $this->_user()->IsAdmin();
+        } else {
+            // rights for editing current element will be in element get filter
+            $bAllowAccess = $this->_user()->GetID() > 0;
+        }
+        return $bAllowAccess;
+    }
+    private function getIblockSectionsList()
+    {
+        if ($this->allowAccess()) {
+            $rsSection = \Bitrix\Iblock\SectionTable::getList(array(
+                'order' => array('LEFT_MARGIN' => 'ASC'),
+                'filter' => array(
+                    'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
+                    'ACTIVE' => 'Y',
+                ),
+                'select' => array(
+                    'ID',
+                    'NAME',
+                    'DEPTH_LEVEL',
+                ),
+            ));
+            $arrResult = array();
+            while ($arSection = $rsSection->fetch()) {
+                $arSection["NAME"] = str_repeat(" . ", $arSection["DEPTH_LEVEL"]) . $arSection["NAME"];
+                $arSections[$arSection["ID"]] = array(
+                    "VALUE" => $arSection["NAME"]
+                );
+            }
+        }
+        return $arSections;
+    }
 
+    private function getFieldsList(){
+        $COL_COUNT = intval($this->arParams["DEFAULT_INPUT_SIZE"]);
+        if ($COL_COUNT < 1)
+            $COL_COUNT = 30;
+        $arResult= array(
+            "NAME" => array(
+                "PROPERTY_TYPE" => "S",
+                "MULTIPLE" => "N",
+                "COL_COUNT" => $COL_COUNT,
+            ),
+
+            "TAGS" => array(
+                "PROPERTY_TYPE" => "S",
+                "MULTIPLE" => "N",
+                "COL_COUNT" => $COL_COUNT,
+            ),
+
+            "DATE_ACTIVE_FROM" => array(
+                "PROPERTY_TYPE" => "S",
+                "MULTIPLE" => "N",
+                "USER_TYPE" => "DateTime",
+            ),
+
+            "DATE_ACTIVE_TO" => array(
+                "PROPERTY_TYPE" => "S",
+                "MULTIPLE" => "N",
+                "USER_TYPE" => "DateTime",
+            ),
+
+            /*"IBLOCK_SECTION" => array(
+                "PROPERTY_TYPE" => "L",
+                "ROW_COUNT" => "8",
+                "MULTIPLE" => $this->arParams["MAX_LEVELS"] == 1 ? "N" : "Y",
+                "ENUM" => $arResult["SECTION_LIST"],
+            ),*/
+
+            "PREVIEW_TEXT" => array(
+                "PROPERTY_TYPE" => ($this->arParams["PREVIEW_TEXT_USE_HTML_EDITOR"] ? "HTML" : "T"),
+                "MULTIPLE" => "N",
+                "ROW_COUNT" => "5",
+                "COL_COUNT" => $COL_COUNT,
+            ),
+            "PREVIEW_PICTURE" => array(
+                "PROPERTY_TYPE" => "F",
+                "FILE_TYPE" => "jpg, gif, bmp, png, jpeg",
+                "MULTIPLE" => "N",
+            ),
+            "DETAIL_TEXT" => array(
+                "PROPERTY_TYPE" => ($this->arParams["DETAIL_TEXT_USE_HTML_EDITOR"] ? "HTML" : "T"),
+                "MULTIPLE" => "N",
+                "ROW_COUNT" => "5",
+                "COL_COUNT" => $COL_COUNT,
+            ),
+            "DETAIL_PICTURE" => array(
+                "PROPERTY_TYPE" => "F",
+                "FILE_TYPE" => "jpg, gif, bmp, png, jpeg",
+                "MULTIPLE" => "N",
+            ),
+        );
+
+        return $arResult;
+    }
+    private function getFieldsForEdition()
+    {
+        foreach ($this->getFieldsList() as $key => $arField) {
+            if (in_array($key, $this->arParams["PROPERTY_CODES"])) {
+                $arResult[$key] = $arField;
+            }
+        }
+        return $arResult;
+    }
+
+    private function getPropertiesListsForEdition()
+    {
+        try {
+            $rsProperty = \Bitrix\Iblock\PropertyTable::getList(array(
+                'filter' => array('IBLOCK_ID' => $this->arParams['IBLOCK_ID'], 'ACTIVE' => 'Y'),
+            ));
+            while ($arProperty = $rsProperty->fetch()) {
+
+                if (in_array($arProperty["ID"], $this->arParams["PROPERTY_CODES"])) {
+                    if ($arProperty['PROPERTY_TYPE'] == 'L') {
+                        //$arProperty['ENUM'] = $this->getPropsListVal(39);
+                        $rsEnum = \Bitrix\Iblock\PropertyEnumerationTable::getList(array(
+                            'filter' => array('PROPERTY_ID' => $arProperty["ID"]),
+                        ));
+                        while ($arEnum = $rsEnum->fetch()) {
+                            $arProperty['ENUM'][$arEnum['ID']] = $arEnum;
+                        }
+                    }
+                    $arPropertiesEdit["PROPERTY_LIST_FULL"][$arProperty["ID"]] = $arProperty;
+                    $arPropertiesEdit["PROPERTY_ID_LIST"][] = $arProperty["ID"];
+                    $arPropertiesEdit["PROPERTY_CODE_LIST"][] = $arProperty["CODE"];
+                }
+            }
+            // if (is_array($arProperty)){}else{throw new SystemException("Not array");}
+
+        } catch (SystemException $e) {
+            echo $e->getMessage();
+        }
+        return $arPropertiesEdit;
+    }
+    private function getPropertiesListFull(){
+        try {
+            if (is_array($this->getPropertiesListsForEdition()["PROPERTY_LIST_FULL"])) {
+                $arResult = $this->getFieldsForEdition() + $this->getPropertiesListsForEdition()["PROPERTY_LIST_FULL"];
+            }else{
+                $arResult = $this->getFieldsForEdition()["PROPERTY_LIST_FULL"];
+            }
+        }catch (Exception $e){
+            echo $e->getMessage();
+        }
+
+        return $arResult;
+    }
 
 }
