@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="42e1bb39-2cb8-40cb-aba1-03b625e421cb" name="yataxi">
+        <fileTransfer rootFolder="/home/c/cok23" accessType="SFTP" host="cok23.beget.tech" port="22" sshConfigId="558b5d3f-0c11-457d-b70c-7e89605bf475" sshConfig="cok23@cok23.beget.tech:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
