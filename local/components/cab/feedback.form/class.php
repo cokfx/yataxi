@@ -108,6 +108,7 @@ class FeedbackFormHandler extends CBitrixComponent
     private function getResult($arParams)
     {
         $arResult = [];
+        //// prepair fields for Form
         $arResult['SECTION_LIST'] = $this->getIblockSectionsList();
         // ib getFieldsList for form fields create
         $arResult["PROPERTY_LIST_FULL"] = $this->getPropertiesListFull();
